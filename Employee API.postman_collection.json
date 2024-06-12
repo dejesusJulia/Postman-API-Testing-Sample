@@ -1,0 +1,409 @@
+{
+	"info": {
+		"_postman_id": "c831b1f0-e9e3-44b3-b473-f3badf88443f",
+		"name": "Employee API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25991312"
+	},
+	"item": [
+		{
+			"name": "List of Employees",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// test the status\r",
+							"pm.test(\"Status code is 200\", () =>\r",
+							"    pm.response.to.have.status(200)\r",
+							");\r",
+							"\r",
+							"// parse the response\r",
+							"const response  = pm.response.json();\r",
+							"\r",
+							"// print the response\r",
+							"console.log(\"List of employees: \" + response.status);\r",
+							"\r",
+							"// check if the response is not empty\r",
+							"pm.test(\"List of Employees API is successful\", () => \r",
+							"    pm.expect(response.data).to.be.an('array').that.is.not.empty\r",
+							");\r",
+							"\r",
+							"// store IDs in a variable\r",
+							"let employeeIDs = response.data.map(detail => detail.id);\r",
+							"// set a collection variable that contains all the IDs\r",
+							"pm.collectionVariables.set(\"employeeIDs\", JSON.stringify(employeeIDs))\r",
+							"\r",
+							"// Initialize the index\r",
+							"pm.collectionVariables.set(\"currentIndex\", 0);\r",
+							"// print out the array length for interation reference in runner\r",
+							"console.log(employeeIDs.length);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/employees",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"employees"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Single Employee",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// test the status\r",
+							"pm.test(\"Status code is 200\", () =>\r",
+							"    pm.response.to.have.status(200)\r",
+							");\r",
+							"\r",
+							"// parse the response\r",
+							"const response  = pm.response.json();\r",
+							"// get the employee IDs from the Collection variable\r",
+							"let employeeIDs  = JSON.parse(pm.collectionVariables.get(\"employeeIDs\"));\r",
+							"// get current index\r",
+							"let index = pm.collectionVariables.get(\"currentIndex\") || 0;\r",
+							"// initialize local index to 0\r",
+							"let i = 0\r",
+							"\r",
+							"// set the i to current index minus 1, since we increment the current index on pre-request script to prepare for the next interation\r",
+							"if(currentIndex > 0){\r",
+							"    i = currentIndex - 1\r",
+							"}else if(pm.collectionVariables.get(\"currentIndex\") == null){\r",
+							"    i = employeeIDs.length - 1 \r",
+							"}\r",
+							"\r",
+							"// expect the response to be equal to be success\r",
+							"pm.test(\"Getting single employee is successful\", () => \r",
+							"    pm.expect(response.status).to.eql(\"success\")\r",
+							");\r",
+							"\r",
+							"// check if the displayed data matches with the searched item\r",
+							"pm.test(`Getting details for Employee # ${employeeIDs[i]} is a success`, () => \r",
+							"    pm.expect(response.data.id).to.eql(parseInt(employeeIDs[i]))\r",
+							");"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Retrieve the stored IDs from the collection variable\r",
+							"let ids = JSON.parse(pm.collectionVariables.get(\"employeeIDs\"));\r",
+							"\r",
+							"\r",
+							"// Get the current index from the environment or initialize it to 0\r",
+							"let index = pm.collectionVariables.get(\"currentIndex\")|| 0;\r",
+							"\r",
+							"console.log(ids);\r",
+							"\r",
+							"// Set the portfolioID for the current iteration\r",
+							"pm.collectionVariables.set(\"employeeID\", ids[index]);\r",
+							"\r",
+							"// Increment the index for the next iteration\r",
+							"index++;\r",
+							"\r",
+							"// Check if the index exceeds the length of the array and reset if necessary\r",
+							"if (index >= ids.length) {\r",
+							"    index = null; // set it to null or a specific value if needed\r",
+							"}\r",
+							"\r",
+							"// Update the collection variable with the new index\r",
+							"pm.collectionVariables.set(\"currentIndex\", index);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/employee/{{employeeID}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"employee",
+						"{{employeeID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Employee",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// test the status\r",
+							"pm.test(\"Status code is either 200, 201, or 202\", () =>\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202])\r",
+							");\r",
+							"\r",
+							"// parse the response\r",
+							"const response  = pm.response.json();\r",
+							"\r",
+							"console.log(\"Creation of new employee: \" + response.status);\r",
+							"\r",
+							"// expect the response to be equal to be success\r",
+							"pm.test(\"Adding new employee is successful\", () => \r",
+							"    pm.expect(response.status).to.eql(\"success\")\r",
+							");\r",
+							"// print message to test results\r",
+							"pm.test(`Message: ${response.message}`, () => \r",
+							"    pm.expect(response.message).to.not.be.empty\r",
+							");\r",
+							"// Check the response body\r",
+							"pm.test(`Name: ${response.data.name}`, () =>\r",
+							"    // check if the name is not an empty string\r",
+							"    pm.expect(response.data.name).to.be.a(\"string\").that.is.not.empty\r",
+							");\r",
+							"\r",
+							"pm.test(`Salary: ${response.data.salary}`, () =>\r",
+							"    // check if the salary is not an empty string\r",
+							"    pm.expect(response.data.salary).to.be.a(\"string\").that.is.not.empty\r",
+							");\r",
+							"\r",
+							"pm.test(`Age: ${response.data.age}`, () =>\r",
+							"    // check if the age is a a number(integer)\r",
+							"    pm.expect(response.data.age).to.be.a(\"number\").that.is.not.NaN\r",
+							");\r",
+							"\r",
+							"pm.test(`ID: ${response.data.id}`, () =>\r",
+							"    // check if the ID property exists\r",
+							"    pm.expect(response.data).to.have.property(\"id\") \r",
+							");\r",
+							"\r",
+							"// set new employee ID variable to be used for PUT request\r",
+							"pm.collectionVariables.set(\"newEmployeeID\", response.data.id)\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"Jane Doe\", \r\n    \"salary\": \"12000\", \r\n    \"age\": 24 \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/create",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Employee",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// test the status\r",
+							"pm.test(\"Status code is either 200, 201, or 202\", () =>\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202])\r",
+							");\r",
+							"\r",
+							"// parse the response\r",
+							"const response  = pm.response.json();\r",
+							"\r",
+							"console.log(\"Creation of new employee: \" + response.status);\r",
+							"\r",
+							"// expect the response to be equal to be success\r",
+							"pm.test(\"Adding new employee is successful\", () => \r",
+							"    pm.expect(response.status).to.eql(\"success\")\r",
+							");\r",
+							"// print message to test results\r",
+							"pm.test(`Message: ${response.message}`, () => \r",
+							"    pm.expect(response.message).to.not.be.empty\r",
+							");\r",
+							"// Check the response body\r",
+							"pm.test(`New Name: ${response.data.name}`, () =>\r",
+							"    // check if the name is not an empty string\r",
+							"    pm.expect(response.data.name).to.be.a(\"string\").that.is.not.empty\r",
+							");\r",
+							"\r",
+							"pm.test(`New Salary: ${response.data.salary}`, () =>\r",
+							"    // check if the salary is not an empty string\r",
+							"    pm.expect(response.data.salary).to.be.a(\"string\").that.is.not.empty\r",
+							");\r",
+							"\r",
+							"pm.test(`New Age: ${response.data.age}`, () =>\r",
+							"    // check if the age is a a number(integer)\r",
+							"    pm.expect(response.data.age).to.be.a(\"number\").that.is.not.NaN\r",
+							");\r",
+							"\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"Athena\", \r\n    \"salary\": \"900\", \r\n    \"age\": 25\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/update/{{newEmployeeID}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"update",
+						"{{newEmployeeID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Employee",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status is 200\", () => \r",
+							"    pm.response.to.have.status(200)\r",
+							");\r",
+							"\r",
+							"// parse response as JSON\r",
+							"const response = pm.response.json();\r",
+							"\r",
+							"// Check for a success message\r",
+							"pm.test(`Deletion process is a success. See this message: \"${response.message}\"`, () => \r",
+							"    // check if the response message contains a \"success\" word\r",
+							"    pm.expect(response.message.toLowerCase()).to.include(\"success\")\r",
+							");"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/delete/25",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"delete",
+						"25"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "baseURL",
+			"value": "https://dummy.restapiexample.com/api/v1"
+		},
+		{
+			"key": "employeeIDs",
+			"value": ""
+		},
+		{
+			"key": "currentIndex",
+			"value": ""
+		},
+		{
+			"key": "employeeID",
+			"value": ""
+		},
+		{
+			"key": "newEmployeeID",
+			"value": ""
+		}
+	]
+}
